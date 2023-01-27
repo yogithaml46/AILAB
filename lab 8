@@ -1,0 +1,363 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "UnificationUsingFOL.ipynb",
+      "provenance": [],
+      "authorship_tag": "ABX9TyMkC5ZQRJhAJ3wS68ugTm2k",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/KIRAN-MK-211/AI_LAB/blob/main/UnificationUsingFOL.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "1UpiS62jLBnI"
+      },
+      "outputs": [],
+      "source": [
+        "import re"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def getAttributes(expression):\n",
+        "    expression = expression.split(\"(\")[1:]\n",
+        "    expression = \"(\".join(expression) \n",
+        "    expression = expression.split(\")\")[:-1]\n",
+        "    expression = \")\".join(expression)\n",
+        "    attributes = expression.split(',')\n",
+        "    return attributes\n"
+      ],
+      "metadata": {
+        "id": "QPc9Up8qLF_q"
+      },
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def getInitialPredicate(expression):\n",
+        "    return expression.split(\"(\")[0]"
+      ],
+      "metadata": {
+        "id": "OrvD-jRlLHG6"
+      },
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def isConstant(char):\n",
+        "    return char.isupper() and len(char) == 1"
+      ],
+      "metadata": {
+        "id": "_MtRFjtOLIyx"
+      },
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def isVariable(char):\n",
+        "    return char.islower() and len(char) == 1"
+      ],
+      "metadata": {
+        "id": "OtOgurF7LL-9"
+      },
+      "execution_count": 5,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def replaceAttributes(exp, old, new):\n",
+        "    attributes = getAttributes(exp)\n",
+        "    predicate = getInitialPredicate(exp)\n",
+        "    for index, val in enumerate(attributes):\n",
+        "        if val == old:\n",
+        "            attributes[index] = new\n",
+        "    return predicate + \"(\" + \",\".join(attributes) + \")\"\n"
+      ],
+      "metadata": {
+        "id": "9ftCQen7LNMs"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def apply(exp, substitutions):\n",
+        "    for substitution in substitutions:\n",
+        "        new, old = substitution  \n",
+        "        exp = replaceAttributes(exp, old, new)\n",
+        "    return exp"
+      ],
+      "metadata": {
+        "id": "s_TrO0SNLOii"
+      },
+      "execution_count": 7,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def checkOccurs(var, exp):\n",
+        "    if exp.find(var) == -1:\n",
+        "        return False\n",
+        "    return True"
+      ],
+      "metadata": {
+        "id": "JDyNRVZELQLG"
+      },
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def getFirstPart(expression):\n",
+        "    attributes = getAttributes(expression)\n",
+        "    return attributes[0]\n"
+      ],
+      "metadata": {
+        "id": "w16DLTWkLQqv"
+      },
+      "execution_count": 9,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def getRemainingPart(expression):\n",
+        "    predicate = getInitialPredicate(expression)\n",
+        "    attributes = getAttributes(expression)\n",
+        "    newExpression = predicate + \"(\" + \",\".join(attributes[1:]) + \")\"\n",
+        "    return newExpression"
+      ],
+      "metadata": {
+        "id": "HhDSp_kGLT2b"
+      },
+      "execution_count": 10,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def unify(exp1, exp2):\n",
+        "    if exp1 == exp2:\n",
+        "        return []\n",
+        "\n",
+        "    if isConstant(exp1) and isConstant(exp2):\n",
+        "        if exp1 != exp2:\n",
+        "            print(f\"{exp1} and {exp2} are constants. Cannot be unified\")\n",
+        "            return []\n",
+        "\n",
+        "    if isConstant(exp1):\n",
+        "        return [(exp1, exp2)]\n",
+        "\n",
+        "    if isConstant(exp2):\n",
+        "        return [(exp2, exp1)]\n",
+        "\n",
+        "    if isVariable(exp1):\n",
+        "        return [(exp2, exp1)] if not checkOccurs(exp1, exp2) else []\n",
+        "\n",
+        "    if isVariable(exp2):\n",
+        "        return [(exp1, exp2)] if not checkOccurs(exp2, exp1) else []\n",
+        "\n",
+        "    if getInitialPredicate(exp1) != getInitialPredicate(exp2):\n",
+        "        print(\"Cannot be unified as the predicates do not match!\")\n",
+        "        return []\n",
+        "\n",
+        "    attributeCount1 = len(getAttributes(exp1))\n",
+        "    attributeCount2 = len(getAttributes(exp2))\n",
+        "    if attributeCount1 != attributeCount2:\n",
+        "        print(f\"Length of attributes {attributeCount1} and {attributeCount2} do not match. Cannot be unified\")\n",
+        "        return []\n",
+        "\n",
+        "    head1 = getFirstPart(exp1)\n",
+        "    head2 = getFirstPart(exp2)\n",
+        "    initialSubstitution = unify(head1, head2)\n",
+        "    if not initialSubstitution:\n",
+        "        return []\n",
+        "    if attributeCount1 == 1:\n",
+        "        return initialSubstitution\n",
+        "\n",
+        "    tail1 = getRemainingPart(exp1)\n",
+        "    tail2 = getRemainingPart(exp2)\n",
+        "\n",
+        "    if initialSubstitution != []:\n",
+        "        tail1 = apply(tail1, initialSubstitution)\n",
+        "        tail2 = apply(tail2, initialSubstitution)\n",
+        "\n",
+        "    remainingSubstitution = unify(tail1, tail2)\n",
+        "    if not remainingSubstitution:\n",
+        "        return []\n",
+        "\n",
+        "    return initialSubstitution + remainingSubstitution"
+      ],
+      "metadata": {
+        "id": "PIBUNCOVLVej"
+      },
+      "execution_count": 11,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def main():\n",
+        "    print(\"Enter the first expression\")\n",
+        "    e1 = input()\n",
+        "    print(\"Enter the second expression\")\n",
+        "    e2 = input()\n",
+        "    substitutions = unify(e1, e2)\n",
+        "    print(\"The substitutions are:\")\n",
+        "    print([' / '.join(substitution) for substitution in substitutions])\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "qG-q4DgALZpF"
+      },
+      "execution_count": 12,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "main()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "T7eg-W78Lb_R",
+        "outputId": "e44748c3-b199-4f8f-d400-8c5f801a451a"
+      },
+      "execution_count": 13,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Enter the first expression\n",
+            "knows(f(x),y)\n",
+            "Enter the second expression\n",
+            "knows(J,John)\n",
+            "The substitutions are:\n",
+            "['J / f(x)', 'John / y']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "main()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "O77KlRMeLcyO",
+        "outputId": "f26fe911-8867-412c-a364-a031a83f7fb7"
+      },
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Enter the first expression\n",
+            "Student(x)\n",
+            "Enter the second expression\n",
+            "Teacher(Rose)\n",
+            "Cannot be unified as the predicates do not match!\n",
+            "The substitutions are:\n",
+            "[]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "main()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MAHFKhZALiek",
+        "outputId": "13cf2170-539c-49d3-811d-7e1480286c23"
+      },
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Enter the first expression\n",
+            "knows(John,x)\n",
+            "Enter the second expression\n",
+            "knows(y,Mother(y))\n",
+            "The substitutions are:\n",
+            "['John / y', 'Mother(y) / x']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "main()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "J9EVtOxvLnkO",
+        "outputId": "7178f5c1-18d6-4757-facf-616d02ec8209"
+      },
+      "execution_count": 16,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Enter the first expression\n",
+            "like(A,y)\n",
+            "Enter the second expression\n",
+            "like(K,g(x))\n",
+            "A and K are constants. Cannot be unified\n",
+            "The substitutions are:\n",
+            "[]\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
